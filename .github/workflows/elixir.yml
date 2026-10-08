@@ -1,0 +1,56 @@
+name: Elixir CI
+
+on:
+  push:
+    branches: ["main", "release/*", "dev"]
+  pull_request:
+    branches: ["main", "release/*"]
+
+env:
+  MIX_ENV: test
+  # Single source of truth for the toolchain. These feed both setup-beam and the
+  # cache keys, so bumping a version cannot restore artifacts built by the old
+  # one.
+  OTP_VERSION: "27"
+  ELIXIR_VERSION: "1.18"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Build and check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Every dependency comes from Hex (there are no git deps) and this job
+          # never pushes, so the checkout token does not need to persist.
+          persist-credentials: false
+      - name: Set up Elixir
+        # Pinned by commit SHA for the v1.24.1 tag.
+        uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124
+        with:
+          elixir-version: ${{ env.ELIXIR_VERSION }}
+          otp-version: ${{ env.OTP_VERSION }}
+      - name: Restore dependencies cache
+        uses: actions/cache@v6
+        with:
+          path: deps
+          key: ${{ runner.os }}-${{ env.OTP_VERSION }}-${{ env.ELIXIR_VERSION }}-deps-${{ hashFiles('mix.lock') }}
+          restore-keys: ${{ runner.os }}-${{ env.OTP_VERSION }}-${{ env.ELIXIR_VERSION }}-deps-
+      - name: Restore build cache
+        uses: actions/cache@v6
+        with:
+          path: _build
+          key: ${{ runner.os }}-${{ env.OTP_VERSION }}-${{ env.ELIXIR_VERSION }}-build-${{ hashFiles('mix.lock') }}
+          restore-keys: ${{ runner.os }}-${{ env.OTP_VERSION }}-${{ env.ELIXIR_VERSION }}-build-
+      - name: Install dependencies
+        run: mix deps.get
+      - name: Run checks
+        run: |
+          mix format --check-formatted
+          mix compile --warnings-as-errors
+          mix test
+          mix credo --strict

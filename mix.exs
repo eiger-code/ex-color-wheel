@@ -1,28 +1,41 @@
-defmodule Colorbg.MixProject do
+defmodule ColorWheel.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :colorbg,
+      app: :color_wheel,
       version: "0.1.0",
+      description: "An Elixir library for color palette generation and harmonious color schemes.",
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
-      deps: deps()
+      package: [
+        licenses: ["MIT"],
+        links: %{"GitHub" => "https://github.com/eiger-code/ex-color-wheel"}
+      ],
+      deps: deps(),
+      docs: docs()
     ]
   end
 
-  # Run "mix help compile.app" to learn about applications.
   def application do
     [
       extra_applications: [:logger]
     ]
   end
 
-  # Run "mix help deps" to learn about dependencies.
-  defp deps do
+  def deps do
     [
-      # {:dep_from_hexpm, "~> 0.3.0"},
-      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
+      {:credo, "~> 1.7.19", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
+      {:ex_doc, "~> 0.34", only: :dev, runtime: false, warn_if_outdated: true}
+    ]
+  end
+
+  def docs do
+    [
+      main: "readme",
+      extras: ["README.md"],
+      assets: %{"assets" => "assets"}
     ]
   end
 end
