@@ -1,17 +1,21 @@
 defmodule ColorWheel.MixProject do
   use Mix.Project
 
-  @version "0.2.0"
+  @version "0.3.0"
 
   def project do
     [
       app: :color_wheel,
       version: @version,
+      name: "Color Wheel",
       description: "An Elixir library for color palette generation and harmonious color schemes.",
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       package: [
         licenses: ["MIT"],
+        # Explicit because Hex's default file list omits `assets`, which ExDoc
+        # needs to build the documentation from the package.
+        files: ~w(lib assets mix.exs .formatter.exs README.md CHANGELOG.md LICENSE),
         links: %{"GitHub" => "https://github.com/eiger-code/ex-color-wheel"}
       ],
       deps: deps(),
@@ -38,7 +42,9 @@ defmodule ColorWheel.MixProject do
       main: "readme",
       extras: ["README.md", "CHANGELOG.md"],
       assets: %{"assets" => "assets"},
-      logo: "assets/logo-mark.svg"
+      logo: "assets/logo.svg",
+      source_url: "https://github.com/eiger-code/ex-color-wheel",
+      source_ref: "v#{@version}"
     ]
   end
 end

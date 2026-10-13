@@ -1,4 +1,4 @@
-# ![ColorWheel logo](https://raw.github.com/eiger-code/ex-color-wheel/main/assets/logo.svg)
+# Color Wheel
 
 An Elixir library for color palette generation and harmonious color schemes.
 
@@ -6,7 +6,7 @@ An Elixir library for color palette generation and harmonious color schemes.
 ![Hex.pm](https://img.shields.io/hexpm/v/color_wheel)
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue)
 ![Elixir: ~> 1.18](https://img.shields.io/badge/Elixir-~%3E%201.18-4B275F)
-![Erlang/OTP: 27](https://img.shields.io/badge/OTP-27-6E4A7E)
+![Erlang/OTP: 27 | 29](https://img.shields.io/badge/OTP-27_%7C_29-6E4A7E)
 
 - 🔺 **Triadic palettes**: Three colors equally spaced on the color wheel
 - 🔲 **Tetradic palettes**: Four colors forming a rectangle on the color wheel
@@ -15,7 +15,7 @@ An Elixir library for color palette generation and harmonious color schemes.
 - 🔱 **Split-complementary palettes**: Base color with adjacent complements
 - 🌓 **Monochromatic palettes**: Variations of the same hue
 - 🔄 **Color space conversions**: RGB ↔ HSL
-- #️⃣ **Hex support**: Hex string ↔ RGB conversions
+- #️⃣  **Hex support**: Hex string ↔ RGB conversions
 
 ## Installation
 
@@ -24,7 +24,7 @@ Add `color_wheel` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:color_wheel, "~> 0.1.0"}
+    {:color_wheel, "~> 0.3.0"}
   ]
 end
 ```
@@ -72,7 +72,7 @@ The `ColorWheel` module is the public entry point, and every function is
 documented there with tested examples. The remaining palette generators
 (`tetradic_palette/1`, `complementary_palette/1`, `analogous_palette/1`,
 `split_complementary_palette/1`), the remaining conversions (`hsl_to_rgb/1`,
-`rgb_to_hex/1`) and the colour-space helpers live in `ColorWheel.Palettes` and
+`rgb_to_hex/1`) and the color-space helpers live in `ColorWheel.Palettes` and
 `ColorWheel.Color`.
 
 Build the docs locally with `mix docs` and open `doc/index.html`.
@@ -85,12 +85,15 @@ mix test                              # run the test suite
 mix format                            # format the code
 mix compile --warnings-as-errors      # compile without warnings
 mix credo --strict                    # static analysis
+mix dialyzer                          # type analysis (builds a PLT)
 mix docs                              # build HTML docs into doc/
 ```
 
 Continuous integration runs `mix format --check-formatted`,
-`mix compile --warnings-as-errors`, `mix test` and `mix credo --strict` on every
-pull request, so run those four before opening one.
+`mix compile --warnings-as-errors`, `mix test`, `mix credo --strict` and
+`mix dialyzer` on both Elixir 1.18/OTP 27 and Elixir 1.20/OTP 29, then builds
+the docs and the package on the development toolchain. Run them all before
+opening a pull request.
 
 ## Changelog
 

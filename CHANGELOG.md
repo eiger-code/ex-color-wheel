@@ -5,6 +5,35 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-10-13
+
+### Added
+
+- ExDoc source links, so every generated page points at its source in the
+  tagged release on GitHub.
+- A CI job that builds the documentation and the Hex package, and fails when
+  the package stops shipping the documentation assets.
+
+### Changed
+
+- Renamed the documentation logo asset from `assets/logo-mark.svg` to
+  `assets/logo.svg`, and pointed the ExDoc `logo` option at the new path.
+- The Hex package lists its files explicitly, so `assets/` ships with it.
+- Continuous integration also runs `mix dialyzer` and covers two toolchains,
+  Elixir 1.18/OTP 27 and Elixir 1.20/OTP 29.
+- Every GitHub Action is pinned by commit SHA rather than by tag.
+
+### Removed
+
+- Dropped the unused wide `assets/logo-full.svg` lockup.
+
+### Documentation
+
+- README uses a plain `# Color Wheel` heading as the page title again, so the
+  page no longer depends on a remotely hosted image to render.
+- README documents the toolchains continuous integration covers and lists
+  `mix dialyzer` with the other local checks.
+
 ## [0.2.0] - 2026-10-13
 
 ### Added
@@ -44,7 +73,7 @@ Initial public release of ColorWheel.
   - `monochromatic_palette/1` — five saturation/lightness variations of one hue.
 - Color space conversions:
   - `rgb_to_hsl/1` and `hsl_to_rgb/1` (both returning bare tuples).
-  - `hex_to_rgb/1` for 3-, 4-, 6- and 8-digit hex strings, with or without a
+  - `hex_to_rgb/1` for 3- and 6-digit hex strings, with or without a
     leading `#`.
   - `rgb_to_hex/1` for uppercase `#RRGGBB` output.
   - Hue normalization for out-of-range hue values.
@@ -57,5 +86,6 @@ Initial public release of ColorWheel.
   `mix compile --warnings-as-errors`, `mix test` and `mix credo --strict`.
 - MIT license.
 
-[0.2.0]: https://github.com/eiger-code/ex-color-wheel/compare/v0.1.0...HEAD
+[0.3.0]: https://github.com/eiger-code/ex-color-wheel/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/eiger-code/ex-color-wheel/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/eiger-code/ex-color-wheel/releases/tag/v0.1.0

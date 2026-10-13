@@ -8,11 +8,6 @@ on:
 
 env:
   MIX_ENV: test
-  # Single source of truth for the toolchain. These feed both setup-beam and the
-  # cache keys, so bumping a version cannot restore artifacts built by the old
-  # one.
-  OTP_VERSION: "27"
-  ELIXIR_VERSION: "1.18"
 
 permissions:
   contents: read
@@ -21,9 +16,22 @@ jobs:
   check:
     name: Build and check
     runs-on: ubuntu-latest
+    strategy:
+      # Run both toolchains even if one fails, so a break is visible on each.
+      fail-fast: false
+      matrix:
+        include:
+          # The oldest toolchain the `elixir` requirement in mix.exs allows.
+          - elixir: "1.18"
+            otp: "27"
+          # The toolchain used for local development.
+          - elixir: "1.20"
+            otp: "29"
 
     steps:
-      - uses: actions/checkout@v7
+      - name: Checkout
+        # Pinned by commit SHA for the v7 tag.
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           # Every dependency comes from Hex (there are no git deps) and this job
           # never pushes, so the checkout token does not need to persist.
@@ -32,20 +40,41 @@ jobs:
         # Pinned by commit SHA for the v1.24.1 tag.
         uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124
         with:
-          elixir-version: ${{ env.ELIXIR_VERSION }}
-          otp-version: ${{ env.OTP_VERSION }}
+          elixir-version: ${{ matrix.elixir }}
+          otp-version: ${{ matrix.otp }}
+      - name: Compute cache keys
+        id: cache-keys
+        # Prefix shared by the dependency and build caches, assembled here to
+        # keep the `with:` blocks below within 80 columns. The toolchain goes
+        # into the key, so the matrix entries cannot restore each other's
+        # artifacts.
+        env:
+          LOCK_HASH: ${{ hashFiles('mix.lock') }}
+          ELIXIR_VERSION: ${{ matrix.elixir }}
+          OTP_VERSION: ${{ matrix.otp }}
+        run: |
+          prefix="$RUNNER_OS-$MIX_ENV-$OTP_VERSION-$ELIXIR_VERSION"
+          {
+            echo "prefix=$prefix"
+            echo "deps=$prefix-deps-$LOCK_HASH"
+            echo "build=$prefix-build-$LOCK_HASH"
+          } >> "$GITHUB_OUTPUT"
       - name: Restore dependencies cache
-        uses: actions/cache@v6
+        # zizmor: ignore[cache-poisoning] no job here publishes, only builds
+        # Pinned by commit SHA for the v6 tag.
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: deps
-          key: ${{ runner.os }}-${{ env.OTP_VERSION }}-${{ env.ELIXIR_VERSION }}-deps-${{ hashFiles('mix.lock') }}
-          restore-keys: ${{ runner.os }}-${{ env.OTP_VERSION }}-${{ env.ELIXIR_VERSION }}-deps-
+          key: ${{ steps.cache-keys.outputs.deps }}
+          restore-keys: ${{ steps.cache-keys.outputs.prefix }}-deps-
       - name: Restore build cache
-        uses: actions/cache@v6
+        # zizmor: ignore[cache-poisoning] no job here publishes, only builds
+        # Pinned by commit SHA for the v6 tag.
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: _build
-          key: ${{ runner.os }}-${{ env.OTP_VERSION }}-${{ env.ELIXIR_VERSION }}-build-${{ hashFiles('mix.lock') }}
-          restore-keys: ${{ runner.os }}-${{ env.OTP_VERSION }}-${{ env.ELIXIR_VERSION }}-build-
+          key: ${{ steps.cache-keys.outputs.build }}
+          restore-keys: ${{ steps.cache-keys.outputs.prefix }}-build-
       - name: Install dependencies
         run: mix deps.get
       - name: Run checks
@@ -54,3 +83,59 @@ jobs:
           mix compile --warnings-as-errors
           mix test
           mix credo --strict
+          # The dialyzer PLT lives under _build, so the build cache above keeps
+          # this from rebuilding it on every run.
+          mix dialyzer
+
+  docs:
+    name: Build docs and package
+    runs-on: ubuntu-latest
+    # ExDoc is a :dev dependency, so this job cannot run in the :test env
+    # the workflow sets by default.
+    env:
+      MIX_ENV: dev
+
+    steps:
+      - name: Checkout
+        # Pinned by commit SHA for the v7 tag.
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Set up Elixir
+        # Pinned by commit SHA for the v1.24.1 tag.
+        uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124
+        with:
+          # The docs only need to be built on the development toolchain.
+          elixir-version: "1.20"
+          otp-version: "29"
+      - name: Install dependencies
+        run: mix deps.get
+      - name: Build documentation
+        run: mix docs
+      - name: Build the package
+        run: mix hex.build
+      - name: Check that the package ships the docs assets
+        # The docs build reads assets/logo.svg, so a mix.exs files list that
+        # drops it would break docs built from the published tarball.
+        run: |
+          set -euo pipefail
+          mkdir -p tmp/package
+
+          # `mix hex.build` writes <app>-<version>.tar as a *plain* tar archive
+          # (only the inner contents.tar.gz is gzip), so `tar -z` on the outer
+          # archive makes GNU tar pipe it to gzip and fail on Ubuntu runners.
+          shopt -s nullglob
+          packages=(color_wheel-*.tar)
+          if (( ${#packages[@]} == 0 )); then
+            echo "::error::mix hex.build produced no color_wheel-*.tar"
+            ls -la
+            exit 1
+          fi
+          tarball=${packages[0]}
+          echo "Extracting $tarball"
+
+          # Plain tar from Hex, with a gzip fallback in case the outer archive
+          # is ever compressed.
+          tar -xf "$tarball" -C tmp/package \
+            || tar -xzf "$tarball" -C tmp/package
+          tar -tzf tmp/package/contents.tar.gz | grep -qx assets/logo.svg
