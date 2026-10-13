@@ -1,10 +1,9 @@
-# ColorWheel
-
-![ColorWheel logo](assets/logo.svg)
+# ![ColorWheel logo](https://raw.github.com/eiger-code/ex-color-wheel/main/assets/logo.svg)
 
 An Elixir library for color palette generation and harmonious color schemes.
 
 ![CI](https://img.shields.io/github/actions/workflow/status/eiger-code/ex-color-wheel/elixir.yml?branch=main)
+![Hex.pm](https://img.shields.io/hexpm/v/color_wheel)
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue)
 ![Elixir: ~> 1.18](https://img.shields.io/badge/Elixir-~%3E%201.18-4B275F)
 ![Erlang/OTP: 27](https://img.shields.io/badge/OTP-27-6E4A7E)
@@ -92,6 +91,10 @@ mix docs                              # build HTML docs into doc/
 Continuous integration runs `mix format --check-formatted`,
 `mix compile --warnings-as-errors`, `mix test` and `mix credo --strict` on every
 pull request, so run those four before opening one.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for notable changes in each release.
 
 ## Contributing
 
